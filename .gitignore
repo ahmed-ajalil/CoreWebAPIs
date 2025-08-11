@@ -1,0 +1,4 @@
+﻿# Visual Studio and .NET files to ignore
+.vs/
+[Bb]in/
+[Oo]bj/
