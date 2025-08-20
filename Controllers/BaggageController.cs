@@ -18,6 +18,7 @@ namespace CoreWebAPIs.Controllers
         }
 
         [HttpPost]
+        [Authorize(Roles = "Api.Baggage.Read")]
         [Route("addnewzone")]
         public async Task<ApiResponseModel<ZoneModel>> AddNewZone(ZoneModel model)
         {
@@ -41,6 +42,7 @@ namespace CoreWebAPIs.Controllers
 
 
         [HttpPost]
+        [Authorize(Roles = "Api.Baggage.Read")]
         [Route("addnewcountry")]
         public async Task<ApiResponseModel<CountryModel>> AddNewCountry(CountryModel model)
         {
@@ -63,6 +65,7 @@ namespace CoreWebAPIs.Controllers
         }
 
         [HttpPost]
+        [Authorize(Roles = "Api.Baggage.Read")]
         [Route("addnewclass")]
         public async Task<ApiResponseModel<ClassOfServiceModel>> AddNewClass(ClassOfServiceModel model)
         {
@@ -85,6 +88,7 @@ namespace CoreWebAPIs.Controllers
         }
 
         [HttpPost]
+        [Authorize(Roles = "Api.Baggage.Read")]
         [Route("addnewfaretype")]
         public async Task<ApiResponseModel<FareTypeModel>> AddNewFareType(FareTypeModel model)
         {
@@ -107,6 +111,7 @@ namespace CoreWebAPIs.Controllers
         }
 
         [HttpPost]
+        [Authorize(Roles = "Api.Baggage.Read")]
         [Route("addnewroute")]
         public async Task<ApiResponseModel<RouteModel>> AddNewRoute(RouteModel model)
         {
@@ -150,7 +155,7 @@ namespace CoreWebAPIs.Controllers
         ///  
         /// </remarks>
         [HttpGet]
-        [Authorize(Roles = "Api.BaggageCalculator.Read")]
+        [Authorize(Roles = "Api.Baggage.Read")]
         [Route("baggageinformation")]
         public async Task<ApiResponseModel<Dictionary<string, object>>> BaggageInformation([FromQuery]string origin,string destination, string className, string fairType)
         {
@@ -191,7 +196,7 @@ namespace CoreWebAPIs.Controllers
         ///  
         /// </remarks>
         [HttpGet]
-        [Authorize(Roles = "Api.BaggageCalculator.Read")]
+        [Authorize(Roles = "Api.Baggage.Read")]
         [Route("additionalbaggageallowence")]
         public async Task<ApiResponseModel<double>> AdditionalBaggageAllowence([FromQuery] string origin, string destination, int weight)
         {
@@ -224,7 +229,7 @@ namespace CoreWebAPIs.Controllers
         ///  
         /// </remarks>
         [HttpGet]
-        [Authorize(Roles = "Api.BaggageCalculator.Read")]
+        [Authorize(Roles = "Api.Baggage.Read")]
         [Route("flaconflayerbaggageallowence")]
         public async Task<ApiResponseModel<Dictionary<string, string>>> FlaconFlayerBaggageAllowence()
         {
@@ -260,7 +265,7 @@ namespace CoreWebAPIs.Controllers
         ///  
         /// </remarks>
         [HttpGet]
-        [Authorize(Roles = "Api.BaggageCalculator.Read")]
+        [Authorize(Roles = "Api.Baggage.Read")]
         [Route("allstattions")]
         public async Task<ApiResponseModel<List<AirportsViewModel>>> AllStattions()
         {
@@ -293,7 +298,7 @@ namespace CoreWebAPIs.Controllers
         ///  
         /// </remarks>
         [HttpGet]
-        [Authorize(Roles = "Api.BaggageCalculator.Read")]
+        [Authorize(Roles = "Api.Baggage.Read")]
         [Route("allzones")]
         public async Task<ApiResponseModel<List<ZoneViewModel>>> AllZones()
         {
@@ -328,7 +333,7 @@ namespace CoreWebAPIs.Controllers
         ///  
         /// </remarks>
         [HttpGet]
-        [Authorize(Roles = "Api.BaggageCalculator.Read")]
+        [Authorize(Roles = "Api.Baggage.Read")]
         [Route("getzonebyairportcode")]
         public async Task<ApiResponseModel<AirportsViewModel>> GetZoneByAirportCode([FromQuery] string airportcode)
         {
@@ -363,7 +368,7 @@ namespace CoreWebAPIs.Controllers
         ///  
         /// </remarks>
         [HttpGet]
-        [Authorize(Roles = "Api.BaggageCalculator.Read")]
+        [Authorize(Roles = "Api.Baggage.Read")]
         [Route("getadditionalinformation")]
         public async Task<ApiResponseModel<List<AdditionalInformationModel>>> GetAdditionalInformation()
         {

@@ -22,7 +22,7 @@ namespace CoreWebAPIs.Controllers
         }
 
         [HttpPost]
-        //[Authorize(Roles = "Api.MilesCalculator.Read")]
+        [Authorize(Roles = "Api.MilesCalculato.Read")]
         [Route("api/GetAccrualMileage")]
         public async Task<ActionResult> GetAccrualMileage(MilesCalculatorRequest request)
         {
@@ -109,7 +109,7 @@ namespace CoreWebAPIs.Controllers
         }
 
         [HttpPost]
-        //[Authorize(Roles = "Api.MilesCalculator.Read")]
+        [Authorize(Roles = "Api.MilesCalculato.Read")]
         [Route("api/GetUseAccrualMileage")]
         public async Task<ActionResult> GetUseAccrualMileage(UsedMilesCalculatorRequest request)
         {
@@ -182,7 +182,7 @@ namespace CoreWebAPIs.Controllers
         }
 
         [HttpPost]
-        //[Authorize(Roles = "Api.MilesCalculator.Read")]
+        [Authorize(Roles = "Api.MilesCalculato.Read")]
         [Route("api/GetRequiredMilesForUpgrade")]
         public async Task<ActionResult> GetRequiredMilesForUpgrade(RequiredMilesCalculatorRequest request)
         {
@@ -247,7 +247,7 @@ namespace CoreWebAPIs.Controllers
         }
 
         [HttpPost]
-        //[Authorize(Roles = "Api.MilesCalculator.Read")]
+        [Authorize(Roles = "Api.MilesCalculato.Read")]
         [Route("api/GetMultiSegmentUseAccrualMileage")]
         public async Task<ActionResult> GetMultiSegmentUseMileage(UsedMilesCalculatorRequest request)
         {
@@ -381,7 +381,7 @@ namespace CoreWebAPIs.Controllers
         }
 
         [HttpPost]
-        //[Authorize(Roles = "Api.MilesCalculator.Read")]
+        [Authorize(Roles = "Api.MilesCalculato.Read")]
         [Route("api/GetMultiSegmentAccrualMileage")]
         public async Task<ActionResult> GetMultiSegmentAccrualMileage(MilesCalculatorRequest request)
         {
@@ -540,7 +540,7 @@ namespace CoreWebAPIs.Controllers
         }
 
         [HttpPost]
-        //[Authorize(Roles = "Api.MilesCalculator.Read")]
+        [Authorize(Roles = "Api.MilesCalculato.Read")]
         [Route("api/GetMultiSegmentRequiredMilesForUpgrade")]
         public async Task<ActionResult> GetMultiSegmentRequiredMilesForUpgrade(RequiredMilesCalculatorRequest request)
         {

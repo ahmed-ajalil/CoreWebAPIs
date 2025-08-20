@@ -1,5 +1,6 @@
 ﻿using CoreWebAPIs.Interfaces;
 using CoreWebAPIs.Models;
+using Microsoft.AspNetCore.Authorization;
 using Microsoft.AspNetCore.Mvc;
 
 namespace CoreWebAPIs.Controllers
@@ -15,6 +16,7 @@ namespace CoreWebAPIs.Controllers
             _sabreService = sabreService;
         }
 
+        [Authorize(Roles = "Api.Sabre.Read")]
         [HttpPost("searchByFirstLastName")]
         [Produces("application/json")] 
         public async Task<IActionResult> SearchTrips([FromBody] TripSearchRequest request)
@@ -30,6 +32,7 @@ namespace CoreWebAPIs.Controllers
             }
         }
 
+        [Authorize(Roles = "Api.Sabre.Read")]
         [HttpPost("detailsByPNR")]
         [Produces("application/json")]
         [Consumes("application/json")]
@@ -50,6 +53,7 @@ namespace CoreWebAPIs.Controllers
             }
         }
 
+        [Authorize(Roles = "Api.Sabre.Read")]
         [HttpPost("detailsByPNRCert")]
         [Produces("application/json")]
         [Consumes("application/json")]
@@ -70,7 +74,7 @@ namespace CoreWebAPIs.Controllers
             }
         }
 
-
+        [Authorize(Roles = "Api.Sabre.Read")]
         [HttpPost("searchByFFP")]
         [Produces("application/json")]
         public async Task<IActionResult> SearchByFfp([FromBody] FfpSearchRequest request)

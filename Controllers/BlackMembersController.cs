@@ -1,6 +1,7 @@
 ﻿using Azure.Core;
 using CoreWebAPIs.Interfaces;
 using CoreWebAPIs.Models;
+using Microsoft.AspNetCore.Authorization;
 using Microsoft.AspNetCore.Mvc;
 using System.Net.Http;
 using System.Text;
@@ -19,7 +20,7 @@ public class BlackMembersController : ControllerBase
     }
 
     [HttpPost]
-    //[Authorize(Roles = "Api.MilesCalculator.Read")]
+    [Authorize(Roles = "Api.BlackMembers.Read")]
     [Route("api/RetrieveCustomerDetails")]
     public async Task<ActionResult<CustomerDetail>> RetrieveCustomerDetails(string mobileNumber)
     {
@@ -135,7 +136,7 @@ public class BlackMembersController : ControllerBase
     }
 
     [HttpPost]
-    //[Authorize(Roles = "Api.MilesCalculator.Read")]
+    [Authorize(Roles = "Api.BlackMembers.Read")]
     [Route("api/RetrieveMemberDetailsForAllPrograms")]
     public async Task<ActionResult<RetrieveMemberDetailsForAllProgramsResponse>> RetrieveMemberDetailsForAllPrograms(string customerNumber)
     {
@@ -202,7 +203,7 @@ public class BlackMembersController : ControllerBase
     }
 
     [HttpPost]
-    //[Authorize(Roles = "Api.MilesCalculator.Read")]
+    [Authorize(Roles = "Api.BlackMembers.Read")]
     [Route("api/RetrieveMemberDetailsForAllProgramsByMembershipNumber")]
     public async Task<ActionResult<MemberDetailsByMembershipNumberResponse>> RetrieveMemberDetailsForAllProgramsByMembershipNumber(string membershipNumber)
     {
@@ -268,7 +269,7 @@ public class BlackMembersController : ControllerBase
     }
 
     [HttpPost]
-    //[Authorize(Roles = "Api.MilesCalculator.Read")]
+    [Authorize(Roles = "Api.BlackMembers.Read")]
     [Route("api/GetBlackMemberDetails")]
     public async Task<ActionResult<BlackMemberDetailsResponse>> GetBlackMemberDetails(string membershipNumber)
     {
@@ -391,7 +392,7 @@ public class BlackMembersController : ControllerBase
     }
 
     [HttpPost]
-    //[Authorize(Roles = "Api.MilesCalculator.Read")]
+    [Authorize(Roles = "Api.BlackMembers.Read")]
     [Route("api/GetBlackMemberByMobile")]
     public async Task<ActionResult<BlackMemberDetailsResponse>> GetBlackMemberByMobile(string mobileNumber)
     {
@@ -587,6 +588,7 @@ public class BlackMembersController : ControllerBase
     }
 
     [HttpPost]
+    [Authorize(Roles = "Api.BlackMembers.Read")]
     [Route("api/GetMemberAllProgramDetailsByPhoneNumber")]
     public async Task<ActionResult<MemberDetailsByMembershipNumberResponse>> GetFullMemberDetailsByPhone([FromBody] MemberDetailsRequest request)
     {
@@ -753,6 +755,7 @@ public class BlackMembersController : ControllerBase
     }
 
     [HttpPost]
+    [Authorize(Roles = "Api.BlackMembers.Read")]
     [Route("api/GetMemberAllProgramDetailsByPhone")]
     public async Task<ActionResult<MemberDetailsByMembershipNumberResponse>> GetFullMemberDetailsForAllProgramsByPhone(string mobilenumber)
     {

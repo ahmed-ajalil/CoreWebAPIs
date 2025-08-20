@@ -1,5 +1,6 @@
 ﻿using CoreWebAPIs.Context;
 using CoreWebAPIs.Models;
+using Microsoft.AspNetCore.Authorization;
 using Microsoft.AspNetCore.Http;
 using Microsoft.AspNetCore.Mvc;
 using Microsoft.EntityFrameworkCore;
@@ -17,6 +18,7 @@ namespace CoreWebAPIs.Controllers
             _context = context;
         }
 
+        [Authorize(Roles = "Api.FlightStatus.Read")]
         [HttpGet("api/flightStatus/{flightNumber}/{flightDate}")]
         public async Task<ActionResult> GetFlightStatus(string flightNumber, string flightDate)
         {
@@ -231,6 +233,7 @@ namespace CoreWebAPIs.Controllers
             return "Unknown";
         }
 
+        [Authorize(Roles = "Api.FlightStatus.Read")]
         [HttpGet("api/FlightsSearch/{departure}/{arrival}/{fromDate?}/{toDate?}")]
         public async Task<ActionResult> GetFlightsBetweenDates(
             string departure,
@@ -400,7 +403,7 @@ namespace CoreWebAPIs.Controllers
         }
 
 
-
+        [Authorize(Roles = "Api.FlightStatus.Read")]
         [HttpGet("api/airport/{airportCode}")]
         public async Task<ActionResult> GetAirportInfo(string airportCode)
         {
@@ -458,6 +461,7 @@ namespace CoreWebAPIs.Controllers
             }
         }
 
+        [Authorize(Roles = "Api.FlightStatus.Read")]
         [HttpGet("api/GulfairDestinations")]
         public async Task<ActionResult<List<AirportInfo>>> GulfairDestinations()
         {
