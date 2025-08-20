@@ -28,7 +28,7 @@ namespace CoreWebAPIs.Controllers
         {
             try
             {
-                var flights = _context.OtpFlightStatuses.Where(a => a.SchDepDt.Date == DateTime.Now.Date).Select(a => new
+                var flights = await _context.OtpFlightStatuses.Where(a => a.SchDepDt.Date == DateTime.Now.Date).Select(a => new
                 {
                     refNum = a.FltSeqNr,
                     flightDate = a.FltDt,
@@ -54,7 +54,7 @@ namespace CoreWebAPIs.Controllers
                     lastUpdated = a.LastUpdated,
                     gReturn = a.GrdReturn,
                     gat = a.DepGates
-                }).ToList();
+                }).ToListAsync();
 
                 if (flights.Count > 0)
                 {
@@ -80,7 +80,7 @@ namespace CoreWebAPIs.Controllers
             {
                 if (hour >= 1 && hour <= 12)
                 {
-                    var flights = _context.OtpFlightStatuses.Where(a => a.LastUpdated > DateTime.UtcNow.AddHours(-hour)).Select(a => new
+                    var flights = await _context.OtpFlightStatuses.Where(a => a.LastUpdated > DateTime.UtcNow.AddHours(-hour)).Select(a => new
                     {
                         refNum = a.FltSeqNr,
                         flightDate = a.FltDt,
@@ -106,7 +106,7 @@ namespace CoreWebAPIs.Controllers
                         lastUpdated = a.LastUpdated,
                         gReturn = a.GrdReturn,
                         gat = a.DepGates
-                    }).ToList();
+                    }).ToListAsync();
 
                     if (flights.Count > 0)
                     {
@@ -135,7 +135,7 @@ namespace CoreWebAPIs.Controllers
         {
             try
             {
-                var flights = _context.OtpFlightStatuses.Where(a => a.SchDepDt.Date == DateTime.Now.Date && a.FltNr == FlightNumber).Select(a => new
+                var flights = await _context.OtpFlightStatuses.Where(a => a.SchDepDt.Date == DateTime.Now.Date && a.FltNr == FlightNumber).Select(a => new
                 {
                     refNum = a.FltSeqNr,
                     flightDate = a.FltDt,
@@ -161,7 +161,7 @@ namespace CoreWebAPIs.Controllers
                     lastUpdated = a.LastUpdated,
                     gReturn = a.GrdReturn,
                     gat = a.DepGates
-                }).ToList();
+                }).ToListAsync();
 
                 if (flights.Count > 0)
                 {
@@ -185,7 +185,7 @@ namespace CoreWebAPIs.Controllers
         {
             try
             {
-                var flights = _context.OtpFlightStatuses.Where(a => a.SchDepDt.Date == DateTime.Now.Date && a.SchDepArpCd == Departure).Select(a => new
+                var flights = await _context.OtpFlightStatuses.Where(a => a.SchDepDt.Date == DateTime.Now.Date && a.SchDepArpCd == Departure).Select(a => new
                 {
                     refNum = a.FltSeqNr,
                     flightDate = a.FltDt,
@@ -211,7 +211,7 @@ namespace CoreWebAPIs.Controllers
                     lastUpdated = a.LastUpdated,
                     gReturn = a.GrdReturn,
                     gat = a.DepGates
-                }).ToList();
+                }).ToListAsync();
 
                 if (flights.Count > 0)
                 {
@@ -235,7 +235,7 @@ namespace CoreWebAPIs.Controllers
         {
             try
             {
-                var flights = _context.OtpFlightStatuses.Where(a => a.SchDepDt.Date == DateTime.Now.Date && a.SchDepArpCd == Arival).Select(a => new
+                var flights = await _context.OtpFlightStatuses.Where(a => a.SchDepDt.Date == DateTime.Now.Date && a.SchDepArpCd == Arival).Select(a => new
                 {
                     refNum = a.FltSeqNr,
                     flightDate = a.FltDt,
@@ -261,7 +261,7 @@ namespace CoreWebAPIs.Controllers
                     lastUpdated = a.LastUpdated,
                     gReturn = a.GrdReturn,
                     gat = a.DepGates
-                }).ToList();
+                }).ToListAsync();
 
                 if (flights.Count > 0)
                 {
@@ -285,7 +285,7 @@ namespace CoreWebAPIs.Controllers
         {
             try
             {
-                var flights = _context.OtpFlightStatuses.Where(a => a.SchDepDt.Date == DateTime.Now.Date && a.SchDepArpCd == Departure && a.SchArvArpCd == Arival).Select(a => new
+                var flights = await _context.OtpFlightStatuses.Where(a => a.SchDepDt.Date == DateTime.Now.Date && a.SchDepArpCd == Departure && a.SchArvArpCd == Arival).Select(a => new
                 {
                     refNum = a.FltSeqNr,
                     flightDate = a.FltDt,
@@ -311,7 +311,7 @@ namespace CoreWebAPIs.Controllers
                     lastUpdated = a.LastUpdated,
                     gReturn = a.GrdReturn,
                     gat = a.DepGates
-                }).ToList();
+                }).ToListAsync();
 
                 if (flights.Count > 0)
                 {
@@ -336,7 +336,7 @@ namespace CoreWebAPIs.Controllers
         {
             try
             {
-                var flights = _context.otpGatesdep.Select(a => new
+                var flights = await _context.otpGatesdep.Select(a => new
                 {
                     FLTDT = a.FltDt,
                     FLN = a.FltNr,
@@ -345,7 +345,7 @@ namespace CoreWebAPIs.Controllers
                     GAT = a.Gat,
                     BSTPLN = a.Bstpln,
                     GCLPLN = a.Gclpln
-                }).ToList();
+                }).ToListAsync();
 
                 if (flights.Count > 0)
                 {
@@ -371,7 +371,7 @@ namespace CoreWebAPIs.Controllers
             {
                 DateTime date = Convert.ToDateTime(Date);
 
-                var flights = _context.otpGatesdep.Select(a => new
+                var flights = await _context.otpGatesdep.Select(a => new
                 {
                     FLTDT = a.FltDt,
                     FLN = a.FltNr,
@@ -380,7 +380,7 @@ namespace CoreWebAPIs.Controllers
                     GAT = a.Gat,
                     BSTPLN = a.Bstpln,
                     GCLPLN = a.Gclpln
-                }).Where(a => a.FLTDT.Value.Date == date.Date).ToList();
+                }).Where(a => a.FLTDT.Value.Date == date.Date).ToListAsync();
 
                 if (flights.Count > 0)
                 {
@@ -406,7 +406,7 @@ namespace CoreWebAPIs.Controllers
             {
                 DateTime date = Convert.ToDateTime(Date);
 
-                var flights = _context.otpGatesdep.Select(a => new
+                var flights = await _context.otpGatesdep.Select(a => new
                 {
                     FLTDT = a.FltDt,
                     FLN = a.FltNr,
@@ -415,7 +415,7 @@ namespace CoreWebAPIs.Controllers
                     GAT = a.Gat,
                     BSTPLN = a.Bstpln,
                     GCLPLN = a.Gclpln
-                }).Where(a => a.FLTDT.Value.Date == date.Date && a.FLN == FlightNumber).ToList();
+                }).Where(a => a.FLTDT.Value.Date == date.Date && a.FLN == FlightNumber).ToListAsync();
 
                 if (flights.Count > 0)
                 {
@@ -432,6 +432,64 @@ namespace CoreWebAPIs.Controllers
             }
         }
 
+
+
+        [HttpGet]
+[Authorize(Roles = "Api.FlightStatus.Read")]
+[Route("api/GetFlightsIn48Hours")]
+public async Task<ActionResult> GetFlightsIn48Hours()
+{
+    try
+    {
+        // Look back at changes in the last 48 hours
+        var flights = await _context.OtpFlightStatuses
+            .Where(a => a.LastUpdated > DateTime.UtcNow.AddHours(-48))
+            .Select(a => new
+            {
+                refNum = a.FltSeqNr,
+                flightDate = a.FltDt,
+                flightNumber = a.FltNr,
+                legNumber = a.LegSeqNr,
+                schDepartureDate = a.SchDepDt,
+                pubSchDepartureDate = a.PubSchDepDt,
+                schArrivalDate = a.SchArvDt,
+                pubSchArrivalDate = a.PubSchArvDt,
+                offBlocks = a.ActualOffblocks,
+                onblocks = a.ActualOnblocks,
+                airBone = a.ActualAirborne,
+                landing = a.ActualLanding,
+                latestDepDate = a.LatestDepDt,
+                latestArvDate = a.LatestArvDt,
+                origin = a.SchDepArpCd,
+                destination = a.SchArvArpCd,
+                acType = a.LatestEqpCd,
+                regustration = a.LatestTailNr,
+                status = a.LegStatus,
+                estDepDate = a.EstDepDt,
+                estArvDate = a.EstArvDt,
+                lastUpdated = a.LastUpdated,
+                gReturn = a.GrdReturn,
+                gat = a.DepGates
+            })
+            .ToListAsync();
+
+        if (flights.Count > 0)
+        {
+            return Ok(flights);
+        }
+        else
+        {
+            return NoContent();
+        }
+    }
+    catch (Exception ex)
+    {
+        return StatusCode(500, new { ErrorMessage = ex.Message });
+    }
+}
+
+
+
         [HttpGet]
         [Authorize(Roles = "Api.FlightStatus.Read")]
         [Route("api/GetDepGatesByDepArr/{Dep}/{Arr}/{Date}")]
@@ -441,7 +499,7 @@ namespace CoreWebAPIs.Controllers
             {
                 DateTime date = Convert.ToDateTime(Date);
 
-                var flights = _context.otpGatesdep.Select(a => new
+                var flights = await _context.otpGatesdep.Select(a => new
                 {
                     FLTDT = a.FltDt,
                     FLN = a.FltNr,
@@ -450,7 +508,7 @@ namespace CoreWebAPIs.Controllers
                     GAT = a.Gat,
                     BSTPLN = a.Bstpln,
                     GCLPLN = a.Gclpln
-                }).Where(a => a.FLTDT.Value.Date == date.Date && a.DEP == Dep && a.ARR == Arr).ToList();
+                }).Where(a => a.FLTDT.Value.Date == date.Date && a.DEP == Dep && a.ARR == Arr).ToListAsync();
 
                 if (flights.Count > 0)
                 {
