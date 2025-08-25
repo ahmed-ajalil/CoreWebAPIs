@@ -21,16 +21,18 @@ namespace CoreWebAPIs.Controllers
             _context = context;
         }
 
-        [HttpGet]
+
         //[Authorize(Roles = "Api.FlightStatus.Read")]
+        [HttpGet]
         [Route("api/GetTodayFlightsStatus")]
         public async Task<ActionResult> GetTodayFlightsStatus()
         {
-            DateTime date = DateTime.Now;
-
             try
             {
-                var getTodayFlights = _context.OtpFlightInfos.Where(a => a.FlightDate.Value.Date == DateTime.Now.Date).ToList();
+                // Only take flights where FlightDate has a value and matches today
+                var getTodayFlights = _context.OtpFlightInfos
+                    .Where(a => a.FlightDate.HasValue && a.FlightDate.Value.Date == DateTime.Now.Date)
+                    .ToList();
 
                 if (getTodayFlights.Count > 0)
                 {
@@ -43,40 +45,56 @@ namespace CoreWebAPIs.Controllers
                         {
                             Flight_Date = a.FlightDate,
                             Flight_Number = a.FlightNumber,
-                            Scheduled_Departure_Time = a.ScheduledDepartureDateTime.HasValue ? a.ScheduledDepartureDateTime.Value.ToString("hh:mm tt") : null,
-                            Scheduled_Arrival_Time = a.ScheduledArrivalDateTime.HasValue ? a.ScheduledArrivalDateTime.Value.ToString("hh:mm tt") : null,
-                            Departure_Time = a.ScheduledDepartureDateTime.HasValue ? a.ScheduledDepartureDateTime.Value.ToString("hh:mm tt") : null,
-                            Arrival_Time = a.ScheduledArrivalDateTime.HasValue ? a.ScheduledArrivalDateTime.Value.ToString("hh:mm tt") : null,
+
+                            Scheduled_Departure_Time = a.ScheduledDepartureDateTime?.ToString("hh:mm tt"),
+                            Scheduled_Arrival_Time = a.ScheduledArrivalDateTime?.ToString("hh:mm tt"),
+                            Departure_Time = a.ScheduledDepartureDateTime?.ToString("hh:mm tt"),
+                            Arrival_Time = a.ScheduledArrivalDateTime?.ToString("hh:mm tt"),
+
                             Departure_Airport_Code = a.ActualDepartureAirport,
                             Arrival_Airport_Code = a.ActualArrivalAirport,
+
                             PassengerDetail = new
                             {
-                                Total_Passengers = a.OtpPassengerDetail.Total,
-                                Business_Class = a.OtpPassengerDetail.Business,
-                                Economy_Class = a.OtpPassengerDetail.Coach,
-                                Total_Adult = a.OtpPassengerDetail.Adult,
-                                Total_Child = a.OtpPassengerDetail.Child,
-                                Total_Infant = a.OtpPassengerDetail.Infant,
-                                Aircraft_Total_Seat_Config = a.OtpPassengerDetail.SeatConfig,
-                                Aircraft_Total_Business_Class_Config = a.OtpPassengerDetail.JSeatConfig,
-                                Aircraft_Total_Economy_Class_Config = a.OtpPassengerDetail.YSeatConfig,
-                                Total_Booked_Business_Class = a.OtpPassengerDetail.BookedJ,
-                                Total_Booked_Economy_Class = a.OtpPassengerDetail.BookedY,
+                                Total_Passengers = a.OtpPassengerDetail?.Total ?? 0,
+                                Business_Class = a.OtpPassengerDetail?.Business ?? 0,
+                                Economy_Class = a.OtpPassengerDetail?.Coach ?? 0,
+                                Total_Adult = a.OtpPassengerDetail?.Adult ?? 0,
+                                Total_Child = a.OtpPassengerDetail?.Child ?? 0,
+                                Total_Infant = a.OtpPassengerDetail?.Infant ?? 0,
+
+                                // Strings → use ?? null
+                                Aircraft_Total_Seat_Config = a.OtpPassengerDetail?.SeatConfig ?? null,
+                                Aircraft_Total_Business_Class_Config = a.OtpPassengerDetail?.JSeatConfig ?? null,
+                                Aircraft_Total_Economy_Class_Config = a.OtpPassengerDetail?.YSeatConfig ?? null,
+
+                                // Numbers → use ?? 0
+                                Total_Booked_Business_Class = a.OtpPassengerDetail?.BookedJ ?? 0,
+                                Total_Booked_Economy_Class = a.OtpPassengerDetail?.BookedY ?? 0,
                             },
-                            Departure_Airport = airportCodes.Where(ac => ac.Code == a.ActualDepartureAirport).Select(ac => new
-                            {
-                                ac.Country,
-                                ac.City,
-                                ac.Code,
-                                ac.AirportName
-                            }).FirstOrDefault(),
-                            Arrival_Airport = airportCodes.Where(ac => ac.Code == a.ActualArrivalAirport).Select(ac => new
-                            {
-                                ac.Country,
-                                ac.City,
-                                ac.Code,
-                                ac.AirportName
-                            }).FirstOrDefault(),
+
+                            Departure_Airport = airportCodes
+                                .Where(ac => ac.Code == a.ActualDepartureAirport)
+                                .Select(ac => new
+                                {
+                                    ac.Country,
+                                    ac.City,
+                                    ac.Code,
+                                    ac.AirportName
+                                })
+                                .FirstOrDefault(),
+
+                            Arrival_Airport = airportCodes
+                                .Where(ac => ac.Code == a.ActualArrivalAirport)
+                                .Select(ac => new
+                                {
+                                    ac.Country,
+                                    ac.City,
+                                    ac.Code,
+                                    ac.AirportName
+                                })
+                                .FirstOrDefault(),
+
                             a.Status
                         }).ToList()
                     };
@@ -91,6 +109,9 @@ namespace CoreWebAPIs.Controllers
                 return StatusCode(500, new { ErrorMessage = ex.Message });
             }
         }
+
+
+
 
         [HttpGet]
         [Route("api/GetTodayFlights")]

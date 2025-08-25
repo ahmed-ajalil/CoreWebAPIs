@@ -435,58 +435,60 @@ namespace CoreWebAPIs.Controllers
 
 
         [HttpGet]
-[Authorize(Roles = "Api.FlightStatus.Read")]
-[Route("api/GetFlightsIn48Hours")]
-public async Task<ActionResult> GetFlightsIn48Hours()
-{
-    try
-    {
-        // Look back at changes in the last 48 hours
-        var flights = await _context.OtpFlightStatuses
-            .Where(a => a.LastUpdated > DateTime.UtcNow.AddHours(-48))
-            .Select(a => new
+        [HttpGet]
+        [Route("api/GetFlightsIn48Hours")]
+        public async Task<ActionResult> GetFlightsIn48Hours()
+        {
+            try
             {
-                refNum = a.FltSeqNr,
-                flightDate = a.FltDt,
-                flightNumber = a.FltNr,
-                legNumber = a.LegSeqNr,
-                schDepartureDate = a.SchDepDt,
-                pubSchDepartureDate = a.PubSchDepDt,
-                schArrivalDate = a.SchArvDt,
-                pubSchArrivalDate = a.PubSchArvDt,
-                offBlocks = a.ActualOffblocks,
-                onblocks = a.ActualOnblocks,
-                airBone = a.ActualAirborne,
-                landing = a.ActualLanding,
-                latestDepDate = a.LatestDepDt,
-                latestArvDate = a.LatestArvDt,
-                origin = a.SchDepArpCd,
-                destination = a.SchArvArpCd,
-                acType = a.LatestEqpCd,
-                regustration = a.LatestTailNr,
-                status = a.LegStatus,
-                estDepDate = a.EstDepDt,
-                estArvDate = a.EstArvDt,
-                lastUpdated = a.LastUpdated,
-                gReturn = a.GrdReturn,
-                gat = a.DepGates
-            })
-            .ToListAsync();
+                var now = DateTime.UtcNow;
+                var cutoff = now.AddHours(48);
 
-        if (flights.Count > 0)
-        {
-            return Ok(flights);
+                var flights = await _context.OtpFlightStatuses
+                    .Where(a => a.SchDepDt >= now && a.SchDepDt <= cutoff)
+                    .Select(a => new
+                    {
+                        refNum = a.FltSeqNr,
+                        flightDate = a.FltDt,
+                        flightNumber = a.FltNr,
+                        legNumber = a.LegSeqNr,
+                        schDepartureDate = a.SchDepDt,
+                        pubSchDepartureDate = a.PubSchDepDt,
+                        schArrivalDate = a.SchArvDt,
+                        pubSchArrivalDate = a.PubSchArvDt,
+                        offBlocks = a.ActualOffblocks,
+                        onblocks = a.ActualOnblocks,
+                        airBone = a.ActualAirborne,
+                        landing = a.ActualLanding,
+                        latestDepDate = a.LatestDepDt,
+                        latestArvDate = a.LatestArvDt,
+                        origin = a.SchDepArpCd,
+                        destination = a.SchArvArpCd,
+                        acType = a.LatestEqpCd,
+                        registration = a.LatestTailNr,   // fixed typo
+                        status = a.LegStatus,
+                        estDepDate = a.EstDepDt,
+                        estArvDate = a.EstArvDt,
+                        lastUpdated = a.LastUpdated,
+                        gReturn = a.GrdReturn,
+                        gat = a.DepGates
+                    })
+                    .ToListAsync();
+
+                if (flights.Count > 0)
+                {
+                    return Ok(flights);
+                }
+
+                return NoContent();
+            }
+            catch (Exception ex)
+            {
+                return StatusCode(500, new { ErrorMessage = ex.Message });
+            }
         }
-        else
-        {
-            return NoContent();
-        }
-    }
-    catch (Exception ex)
-    {
-        return StatusCode(500, new { ErrorMessage = ex.Message });
-    }
-}
+
+
 
 
 
