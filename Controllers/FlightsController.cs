@@ -1494,6 +1494,57 @@ namespace CoreWebAPIs.Controllers
             }
         }
 
+
+
+        //[HttpGet]
+        //[Route("api/GetMemberFlights/{phoneNumber}/{membershipNumber}")]
+        //public async Task<ActionResult> GetMemberFlights(string phoneNumber, string membershipNumber)
+        //{
+        //    try
+        //    {
+        //        // ✅ First, find the customer by phone + membership
+        //        var customer = await _context.BasicCustomerDetails
+        //            .FirstOrDefaultAsync(c => c.PhoneNumber == phoneNumber
+        //                                   && c.MembershipNumber == membershipNumber);
+
+        //        if (customer == null)
+        //        {
+        //            return NotFound(new { Status = "No customer found with given phone and membership number" });
+        //        }
+
+        //        // ✅ Now fetch flights linked to this customer
+        //        var flights = await _context.OtpFlightInfos
+        //            .Where(f => f.OtpPassengerDetail != null
+        //                     && f.OtpPassengerDetail.FlightSequenceNumberNavigation != null
+        //                     && f.OtpPassengerDetail.FlightSequenceNumberNavigation.SequenceNumber == f.SequenceNumber)
+        //            .ToListAsync();
+
+        //        if (flights == null || flights.Count == 0)
+        //        {
+        //            return NotFound(new { Status = "No flights found for this customer" });
+        //        }
+
+        //        // ✅ Prepare response
+        //        var response = flights.Select(f => new
+        //        {
+        //            PNR = f.FlightNumber,   // ⚡ Replace with real PNR column if available
+        //            Name = $"{customer.FirstName} {customer.SurName}",
+        //            Source = f.ActualDepartureAirport,
+        //            Destination = f.ActualArrivalAirport,
+        //            Departure = f.ScheduledDepartureDateTime,
+        //            Arrival = f.ScheduledArrivalDateTime,
+        //            Date = f.FlightDate
+        //        }).ToList();
+
+        //        return Ok(response);
+        //    }
+        //    catch (Exception ex)
+        //    {
+        //        return StatusCode(500, new { ErrorMessage = ex.Message });
+        //    }
+        //}
+
+
         [HttpGet]
         [Route("api/GetAirportLocalTime/{AirportCode}")]
         //[Authorize(Roles = "Api.FlightStatus.Read")]

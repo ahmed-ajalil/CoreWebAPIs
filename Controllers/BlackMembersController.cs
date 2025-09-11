@@ -2,6 +2,7 @@
 using CoreWebAPIs.Interfaces;
 using CoreWebAPIs.Models;
 using Microsoft.AspNetCore.Mvc;
+using Microsoft.EntityFrameworkCore;
 using System.Net.Http;
 using System.Text;
 using System.Text.Json;
@@ -17,6 +18,29 @@ public class BlackMembersController : ControllerBase
         _httpClient = httpClient;
         _parserService = parserService;
     }
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
 
     [HttpPost]
     //[Authorize(Roles = "Api.MilesCalculator.Read")]
@@ -919,4 +943,104 @@ public class BlackMembersController : ControllerBase
         }
     }
 
+
+
+
+
+
+
+
+
+    [HttpPost]
+    [Route("api/GetSilverBlueGuestFlightDetails")]
+    public async Task<IActionResult> GetSilverBlueGuestFlightDetails(string membershipNumber)
+    {
+        try
+        {
+            if (string.IsNullOrEmpty(membershipNumber))
+            {
+                return BadRequest("Membership number is required.");
+            }
+
+            var payload = new
+            {
+                companyCode = "GF",
+                membershipNumber = membershipNumber
+            };
+
+            var jsonContent = JsonSerializer.Serialize(payload);
+            var stringContent = new StringContent(jsonContent, Encoding.UTF8, "application/json");
+
+            var httpRequest = new HttpRequestMessage(
+                HttpMethod.Post,
+                "https://gulfair.ibsplc.aero/iflyloyalty/api/flight-service/v1/rest/GetFlights") // ⚠️ replace with your real flights endpoint
+            {
+                Headers =
+            {
+                { "Accept", "application/json" },
+                { "x-auth-channel", "GFINTERNAL@GF" },
+                { "X-auth-token", "GFinternaL@111" }
+            },
+                Content = stringContent
+            };
+
+            var result = await _httpClient.SendAsync(httpRequest);
+            if (!result.IsSuccessStatusCode)
+            {
+                var errorContent = await result.Content.ReadAsStringAsync();
+                return StatusCode((int)result.StatusCode, errorContent);
+            }
+
+            var resultContent = await result.Content.ReadAsStringAsync();
+            var responseDoc = JsonDocument.Parse(resultContent);
+
+            if (!responseDoc.RootElement.TryGetProperty("flights", out var flightsArray) ||
+                flightsArray.GetArrayLength() == 0)
+            {
+                return NotFound("No flights found for this member.");
+            }
+
+            var flights = flightsArray.EnumerateArray()
+                .Select(f => new
+                {
+                    DepartureDate = f.GetProperty("departureDate").GetDateTime(),
+                    DisruptionFlag = f.TryGetProperty("disruptionFlag", out var d) && d.GetString() == "Y"
+                })
+                .ToList();
+
+            // Build response inline (no extra model needed)
+            var response = new
+            {
+                CustomerNumber = membershipNumber,
+                MembershipTier = "Silver/Blue/Guest", // can be set dynamically from IBS if available
+                NumberOfFlights = flights.Count,
+                FlightWithin48Hours = flights.Any(f => (f.DepartureDate - DateTime.UtcNow).TotalHours < 48) ? "Y" : "N",
+                Disruption = flights.Any(f => f.DisruptionFlag) ? "Y" : "N"
+            };
+
+            return Ok(response);
+        }
+        catch (HttpRequestException ex)
+        {
+            return StatusCode(StatusCodes.Status503ServiceUnavailable, $"Service unavailable: {ex.Message}");
+        }
+        catch (Exception ex)
+        {
+            return StatusCode(StatusCodes.Status500InternalServerError, $"Unexpected error: {ex.Message}");
+        }
+    }
+
+
+
+
+
+
+
+
+
+
+
+
+
 }
+

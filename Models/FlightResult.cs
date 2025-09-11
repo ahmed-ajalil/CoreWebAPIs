@@ -16,6 +16,7 @@
         public List<FlightInfo>? Flights { get; set; }
     }
 
+
     public class FlightInfo
     {
         public string FlightNumber { get; set; } = string.Empty;

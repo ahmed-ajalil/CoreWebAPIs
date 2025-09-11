@@ -1,4 +1,4 @@
-using CoreWebAPIs;
+﻿using CoreWebAPIs;
 using CoreWebAPIs.Context;
 using CoreWebAPIs.GraphQL;
 using CoreWebAPIs.Interfaces;
@@ -11,6 +11,8 @@ using Microsoft.OData.Edm;
 using Microsoft.OData.ModelBuilder;
 using Microsoft.OpenApi.Models;
 using System.Reflection;
+
+
 
 var builder = WebApplication.CreateBuilder(args);
 
@@ -51,6 +53,30 @@ builder.Services.AddDbContext<ProfitabilityOTPDbContext>(options =>
     options.UseOracle(builder.Configuration.GetConnectionString("OTPConnectionStrings"),
         oracleOptions => oracleOptions.CommandTimeout(60));
 });
+builder.Services.AddDbContext<ProfitabilityOTPDbContext>(options =>
+{
+    options.UseOracle(builder.Configuration.GetConnectionString("AirportDataStagingConnectionStrings"),
+        oracleOptions => oracleOptions.CommandTimeout(60));
+});
+builder.Services.AddHttpClient();
+builder.Services.AddDbContext<PaxFlightsDbContext>(options =>
+    options.UseOracle(builder.Configuration.GetConnectionString("AirportDb")));
+
+
+builder.Services.AddHttpClient<LoyaltyApiService>((sp, client) =>
+{
+    client.BaseAddress = new Uri("https://gf-uat.ibsplc.aero/iflyloyalty/api/member-retrieval/v50/rest/");
+
+    var byteArray = System.Text.Encoding.ASCII.GetBytes("GFINTERNAL@GF:Gf!nternal@123");
+    client.DefaultRequestHeaders.Authorization =
+        new System.Net.Http.Headers.AuthenticationHeaderValue("Basic", Convert.ToBase64String(byteArray));
+
+    client.DefaultRequestHeaders.Accept.Add(
+        new System.Net.Http.Headers.MediaTypeWithQualityHeaderValue("application/json"));
+});
+
+builder.Services.AddHttpClient<LoyaltyApiService>();
+
 
 
 
@@ -90,9 +116,9 @@ if (app.Environment.IsDevelopment())
 
 app.UseHttpsRedirection();
 
+app.UseAuthentication();
 app.UseAuthorization();
 
-app.UseAuthentication();
 
 app.MapGraphQL("/graphql");
 
