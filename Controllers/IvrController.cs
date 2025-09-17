@@ -3,7 +3,7 @@ using CoreWebAPIs.Models;
 using CoreWebAPIs.Services;
 using Microsoft.AspNetCore.Mvc;
 using Microsoft.EntityFrameworkCore;
-using System.Collections.Generic;
+using System.Net.Http;
 using System.Text.Json;
 
 namespace CoreWebAPIs.Controllers
@@ -14,11 +14,13 @@ namespace CoreWebAPIs.Controllers
     {
         private readonly PaxFlightsDbContext _airportDb;
         private readonly LoyaltyApiService _loyalty;
+        private readonly HttpClient _httpClient;
 
-        public IvrController(PaxFlightsDbContext airportDb, LoyaltyApiService loyalty)
+        public IvrController(PaxFlightsDbContext airportDb, LoyaltyApiService loyalty, HttpClient httpClient)
         {
             _airportDb = airportDb;
             _loyalty = loyalty;
+            _httpClient = httpClient;
         }
 
         // ============================ 
@@ -77,127 +79,71 @@ namespace CoreWebAPIs.Controllers
         }
 
         // -------------------------------
-        // Stage 3 – Flight Details
+        // 3. Flight Details (External API)
         // -------------------------------
         [HttpPost("flights/details")]
-        public async Task<IActionResult> GetFlightsDetails([FromBody] FlightsRequest request)
+        public async Task<IActionResult> GetFlightDetails([FromBody] FlightDetailsRequest request)
         {
-            var today = DateTime.Today;
-            var now = DateTime.Now;
-            var cutoff = now.AddHours(48);
-
-            var allFlights = await _airportDb.PaxFlightDetails
-                .Where(f => f.FFPNUM.Trim() == request.MembershipNumber.Trim())
-                .ToListAsync();
-
-            if (!allFlights.Any())
+            try
             {
+                var apiUrl = $"https://gfflightstatus.azurewebsites.net/api/flightStatus/{request.FlightNumber}/{request.FlightDate:dd-MMM-yyyy}";
+                var apiResponse = await _httpClient.GetAsync(apiUrl);
+
+                if (!apiResponse.IsSuccessStatusCode)
+                {
+                    return StatusCode((int)apiResponse.StatusCode, new
+                    {
+                        Status = "Error",
+                        Message = "Unable to fetch flight status from external API"
+                    });
+                }
+
+                var json = await apiResponse.Content.ReadAsStringAsync();
+                using var doc = JsonDocument.Parse(json);
+
+                int flightsAvailable = doc.RootElement.GetProperty("totalFlights").GetInt32();
+                bool within48Hours = Math.Abs((request.FlightDate - DateTime.Now).TotalHours) <= 48;
+
+                bool isDisrupted = false;
+                string status = "Unknown";
+                string currentStatus = "Unknown";
+
+                if (doc.RootElement.TryGetProperty("flights", out var flights) && flights.ValueKind == JsonValueKind.Array)
+                {
+                    var firstFlight = flights[0];
+                    status = firstFlight.TryGetProperty("status", out var st) ? st.GetString() ?? "Unknown" : "Unknown";
+                    currentStatus = firstFlight.TryGetProperty("currentStatus", out var cs) ? cs.GetString() ?? "Unknown" : "Unknown";
+
+                    if (!string.Equals(status, "On Time", StringComparison.OrdinalIgnoreCase))
+                        isDisrupted = true;
+                }
+
                 return Ok(new
                 {
-                    success = false,
-                    message = $"No flights found for membership {request.MembershipNumber}",
-                    totalFlights = 0,
-                    hasDisruption = "N",
-                    flights = new List<FlightInfo>()
+                    FlightNumber = request.FlightNumber,
+                    FlightDate = request.FlightDate.ToString("dd-MMM-yyyy"),
+                    FlightsAvailable = flightsAvailable,
+                    Within48Hours = within48Hours ? "Y" : "N",
+                    IsDisrupted = isDisrupted ? "Y" : "N",
+                    Status = status,
+                    CurrentStatus = currentStatus
                 });
             }
-
-            var combined = allFlights
-                .Where(f => f.SCH_DEP_DT.HasValue &&
-                           (f.SCH_DEP_DT.Value.Date == today ||
-                           (f.SCH_DEP_DT.Value >= now && f.SCH_DEP_DT.Value <= cutoff)))
-                .Select(f => MapFlight(f))
-                .ToList();
-
-            var hasDisruption = allFlights.Any(f =>
-                f.DISRUPTED_FLAG == "TRUE" ||
-                !string.IsNullOrEmpty(f.CNCL_CD) ||
-                (f.ACTUAL_DEP_DT != null && f.SCH_DEP_DT != null && f.ACTUAL_DEP_DT > f.SCH_DEP_DT) ||
-                (f.ACTUAL_ARV_DT != null && f.SCH_ARV_DT != null && f.ACTUAL_ARV_DT > f.SCH_ARV_DT)
-            ) ? "Y" : "N";
-
-            return Ok(new
+            catch (Exception ex)
             {
-                success = true,
-                message = $"Found {combined.Count} flights for {request.MembershipNumber}",
-                totalFlights = combined.Count,
-                hasDisruption = hasDisruption,
-                flights = combined
-            });
+                return StatusCode(500, new { ErrorMessage = ex.Message });
+            }
         }
 
-
-        // ✅ Mapper
-        private static FlightInfo MapFlight(PaxFlightDetail f)
+        public class FlightDetailsRequest
         {
-            return new FlightInfo
-            {
-                FlightNumber = f.FLT_NR ?? "",
-                FlightDate = f.SCH_DEP_DT?.ToString("yyyy-MM-dd") ?? "",
-                Status = f.STATUS ?? "",
-                CurrentStatus = f.DISRUPTED_FLAG == "Y" ? "Disrupted" :
-                                f.CNCL_CD != null ? "Cancelled" : "On Time",
-                LegSequenceNumber = f.LEG_SEQ_NR != null ? (int)f.LEG_SEQ_NR : 0,
-
-                DepartureAirport = new AirportInfo
-                {
-                    Code = f.ACTUAL_DEP_ARP_CD ?? "",
-                    AirportName = f.DEP_STATION_NAME ?? "",
-                    Country = "",
-                    City = "",
-                    TimeDifference = 0
-                },
-
-                // 👇 Updated handling for times
-                ScheduledDeparture = (f.SCH_DEP_DT == null) ? "--"
-                                   : (f.SCH_DEP_DT.Value.TimeOfDay == TimeSpan.Zero
-                                       ? f.SCH_DEP_DT.Value.ToString("yyyy-MM-dd")
-                                       : f.SCH_DEP_DT.Value.ToString("yyyy-MM-dd HH:mm")),
-
-                ActualDeparture = (f.ACTUAL_DEP_DT == null) ? "--"
-                                 : (f.ACTUAL_DEP_DT.Value.TimeOfDay == TimeSpan.Zero
-                                     ? f.ACTUAL_DEP_DT.Value.ToString("yyyy-MM-dd")
-                                     : f.ACTUAL_DEP_DT.Value.ToString("yyyy-MM-dd HH:mm")),
-
-                ArrivalAirport = new AirportInfo
-                {
-                    Code = f.ACTUAL_ARV_ARP_CD ?? "",
-                    AirportName = f.ARV_STATION_NAME ?? "",
-                    Country = "",
-                    City = "",
-                    TimeDifference = 0
-                },
-
-                ScheduledArrival = (f.SCH_ARV_DT == null) ? "--"
-                                   : (f.SCH_ARV_DT.Value.TimeOfDay == TimeSpan.Zero
-                                       ? f.SCH_ARV_DT.Value.ToString("yyyy-MM-dd")
-                                       : f.SCH_ARV_DT.Value.ToString("yyyy-MM-dd HH:mm")),
-
-                ActualArrival = (f.ACTUAL_ARV_DT == null) ? "--"
-                                 : (f.ACTUAL_ARV_DT.Value.TimeOfDay == TimeSpan.Zero
-                                     ? f.ACTUAL_ARV_DT.Value.ToString("yyyy-MM-dd")
-                                     : f.ACTUAL_ARV_DT.Value.ToString("yyyy-MM-dd HH:mm"))
-            };
-        }
-
-
-
-
-
-
-
-
-        public class FlightsRequest { public string MembershipNumber { get; set; } }
-        public class FlightDetailsResponse
-        {
-            public int NumberOfFlights { get; set; }
-            public string HasFlightWithin48h { get; set; }
-            public string HasDisruption { get; set; }
-            public List<FlightInfo> Flights { get; set; } = new();
+            public string FlightNumber { get; set; }
+            public DateTime FlightDate { get; set; }
+            public string MembershipNumber { get; set; }
         }
 
         // -------------------------------
-        // Stage 5 – Accounts Linked
+        // 5. Accounts Linked
         // -------------------------------
         [HttpPost("accounts/linked")]
         public async Task<ActionResult<AccountsLinkedResponse>> GetAccountsLinked([FromBody] AccountsLinkedRequest request)
@@ -230,6 +176,7 @@ namespace CoreWebAPIs.Controllers
                 Accounts = accounts
             });
         }
+
         public class AccountsLinkedRequest { public string MembershipNumber { get; set; } }
         public class AccountsLinkedResponse
         {
@@ -243,56 +190,116 @@ namespace CoreWebAPIs.Controllers
             public string Expiry { get; set; }
         }
         // -------------------------------
-        // Stage 6 – Flight Disruptions
+        // 6. Flight Disruptions (same logic as Details, simplified to requirements)
         // -------------------------------
         [HttpPost("flights/disruption")]
-        public async Task<ActionResult<List<DisruptionResponse>>> GetDisruptedFlights([FromBody] FlightsRequest request)
+        public async Task<IActionResult> GetDisruptedFlights([FromBody] FlightsRequest request)
         {
-            var disruptions = await _airportDb.PaxFlightDetails
-                .Where(f => f.FFPNUM == request.MembershipNumber &&
-                            f.PUB_DEP_DT >= DateTime.UtcNow.AddDays(-1) &&
-                            f.PUB_DEP_DT <= DateTime.UtcNow.AddHours(48))
-                .Select(f => new DisruptionResponse
+            try
+            {
+                var apiUrl = $"https://gfflightstatus.azurewebsites.net/api/flightStatus/{request.FlightNumber}/{request.FlightDate:dd-MMM-yyyy}";
+                var apiResponse = await _httpClient.GetAsync(apiUrl);
+
+                if (!apiResponse.IsSuccessStatusCode)
                 {
-                    FlightNumber = f.FLT_NR,
+                    return Ok(new
+                    {
+                        FlightNumber = request.FlightNumber,
+                        FlightDate = request.FlightDate.ToString("dd-MMM-yyyy"),
+                        Status = "Unknown"
+                    });
+                }
 
-                    Status =
-                        (f.DISRUPTED_FLAG == "TRUE") ? "Disrupted"
-                        : (!string.IsNullOrEmpty(f.CNCL_CD)) ? "Cancelled"
-                        : ((f.ACTUAL_DEP_DT != null && f.SCH_DEP_DT != null && f.ACTUAL_DEP_DT > f.SCH_DEP_DT)
-                            || (f.ACTUAL_ARV_DT != null && f.SCH_ARV_DT != null && f.ACTUAL_ARV_DT > f.SCH_ARV_DT))
-                            ? "Delayed"
-                            : "On Time",
+                var json = await apiResponse.Content.ReadAsStringAsync();
+                using var doc = JsonDocument.Parse(json);
 
-                    Message =
-                        (f.DISRUPTED_FLAG == "TRUE") ? "Your flight is disrupted"
-                        : (!string.IsNullOrEmpty(f.CNCL_CD)) ? "Your flight has been cancelled"
-                        : ((f.ACTUAL_DEP_DT != null && f.SCH_DEP_DT != null && f.ACTUAL_DEP_DT > f.SCH_DEP_DT)
-                            || (f.ACTUAL_ARV_DT != null && f.SCH_ARV_DT != null && f.ACTUAL_ARV_DT > f.SCH_ARV_DT))
-                            ? "Your flight was delayed"
-                            : "Your flight is operating normally",
+                string disruptionStatus = "On Time"; // default
 
-                    NewItinerary =
-                        (f.DISRUPTED_FLAG == "TRUE" || !string.IsNullOrEmpty(f.CNCL_CD))
-                            ? "Please contact support to rebook"
-                            : "No action needed"
-                })
-                .ToListAsync();
+                if (doc.RootElement.TryGetProperty("flights", out var flights) && flights.ValueKind == JsonValueKind.Array && flights.GetArrayLength() > 0)
+                {
+                    var firstFlight = flights[0];
 
-            return Ok(disruptions);
+                    string status = firstFlight.TryGetProperty("status", out var st) ? st.GetString() ?? "Unknown" : "Unknown";
+                    string currentStatus = firstFlight.TryGetProperty("currentStatus", out var cs) ? cs.GetString() ?? "Unknown" : "Unknown";
+
+                    // normalize to requirements
+                    if (status.Contains("Cancel", StringComparison.OrdinalIgnoreCase) ||
+                        currentStatus.Contains("Cancel", StringComparison.OrdinalIgnoreCase))
+                    {
+                        disruptionStatus = "Cancelled";
+                    }
+                    else if (status.Contains("Delay", StringComparison.OrdinalIgnoreCase) ||
+                             currentStatus.Contains("Delay", StringComparison.OrdinalIgnoreCase))
+                    {
+                        disruptionStatus = "Delayed";
+                    }
+                    else
+                    {
+                        disruptionStatus = "On Time"; // Success
+                    }
+                }
+
+                return Ok(new
+                {
+                    FlightNumber = request.FlightNumber,
+                    FlightDate = request.FlightDate.ToString("dd-MMM-yyyy"),
+                    Status = disruptionStatus
+                });
+            }
+            catch (Exception ex)
+            {
+                return StatusCode(500, new { ErrorMessage = ex.Message });
+            }
         }
 
 
 
-        // 👇 Already defined inside your controller, keep it
-        public class DisruptionResponse
+        // -------------------------------
+        // 7. Existing Flight (Y/N + Business flag using PAX_CLASS)
+        // -------------------------------
+        [HttpPost("flights/existing")]
+        public async Task<IActionResult> CheckExistingFlight([FromBody] ExistingFlightRequest request)
+        {
+            try
+            {
+                var pax = await _airportDb.PaxFlightDetails
+                    .Where(f => f.FFPNUM == request.MembershipNumber)
+                    .FirstOrDefaultAsync();
+
+                string existing = pax != null ? "Y" : "N";
+                string business = "N";
+
+                if (pax != null && !string.IsNullOrEmpty(pax.PAX_CLASS))
+                {
+                    if (pax.PAX_CLASS.Equals("J", StringComparison.OrdinalIgnoreCase))
+                        business = "Y";
+                    else if (pax.PAX_CLASS.Equals("Y", StringComparison.OrdinalIgnoreCase))
+                        business = "N";
+                }
+
+                return Ok(new
+                {
+                    ExistingFlight = existing,
+                    Business = business
+                });
+            }
+            catch (Exception ex)
+            {
+                return StatusCode(500, new { ErrorMessage = ex.Message });
+            }
+        }
+
+        public class ExistingFlightRequest
+        {
+            public string MembershipNumber { get; set; }
+        }
+
+
+        public class FlightsRequest
         {
             public string FlightNumber { get; set; }
-            public string Status { get; set; }
-            public string Message { get; set; }
-            public string NewItinerary { get; set; }
+            public DateTime FlightDate { get; set; }
+            public string MembershipNumber { get; set; }
         }
-
     }
 }
-

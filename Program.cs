@@ -21,6 +21,10 @@ builder.Services.AddMicrosoftIdentityWebApiAuthentication(builder.Configuration,
 //builder.Services.AddMicrosoftIdentityWebApiAuthentication(builder.Configuration, "MilesCalculatorAzureAd");
 builder.Services.Configure<SabreConfig>(builder.Configuration.GetSection("Sabre"));
 
+builder.Services.AddHttpClient<FlightStatusService>();
+builder.Services.AddHttpClient();
+
+
 builder.Services.AddControllers();
 builder.Services.AddSwaggerGen(options =>
 {
