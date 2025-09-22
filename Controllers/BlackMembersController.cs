@@ -704,17 +704,43 @@ public class BlackMembersController : ControllerBase
             var customerDetailsElement = responseDocument.RootElement.GetProperty("customerDetails")[0];
             var basicCustomerDetail = JsonSerializer.Deserialize<BasicCustomerDetail>(customerDetailsElement.GetRawText(), options);
 
-            
+
             if (basicCustomerDetail?.MembershipNumber == "" || basicCustomerDetail?.MembershipNumber == null)
             {
-                if (basicCustomerDetail.CustomerNumber !=null && basicCustomerDetail.CustomerNumber!="")
+                if (basicCustomerDetail.CustomerNumber != null && basicCustomerDetail.CustomerNumber != "")
                 {
-                    membershipNumber = basicCustomerDetail.CustomerNumber;
+                    var customerToMembership = new
+                    {
+                        companyCode = "GF",
+                        customerNumber = basicCustomerDetail.CustomerNumber
+                    };
+                    var customerToMembershipContent = JsonSerializer.Serialize(customerToMembership);
+                    var getMembershipFromCustomerNumberUrl = new HttpRequestMessage(HttpMethod.Post, "https://gulfair.ibsplc.aero/iflyloyalty/api/member-retrieval/v60/rest/RetrieveMemberDetailsForAllProgramsService/retrieveMemberDetailsForAllPrograms")
+                    {
+                        Headers =
+                {
+                    { "Accept", "application/json" },
+                    { "x-auth-channel", "GFINTERNAL@GF" },
+                    { "X-auth-token", "GFinternaL@111" }
+                },
+                        Content = new StringContent(customerToMembershipContent, System.Text.Encoding.UTF8, "application/json")
+                    };
+                    var customerToMembershipContentResult = await _httpClient.SendAsync(getMembershipFromCustomerNumberUrl);
+                    if (!customerToMembershipContentResult.IsSuccessStatusCode)
+                    {
+                        var errorContent = await customerToMembershipContentResult.Content.ReadAsStringAsync();
+                        return StatusCode((int)firstResult.StatusCode, $"Error from customer details service: {errorContent}");
+                    }
+                    var customerToMembershipContentResultContent = await customerToMembershipContentResult.Content.ReadAsStringAsync();
+                    var optns = new JsonSerializerOptions { PropertyNameCaseInsensitive = true };
+                    var resDoc = JsonDocument.Parse(customerToMembershipContentResultContent);
+                    var customerDtlElmnt = resDoc.RootElement.GetProperty("membershipNumber");
+                    membershipNumber = customerDtlElmnt.GetString();
                 }
-                
-            }else
-            {
-                membershipNumber = basicCustomerDetail.MembershipNumber;
+                else
+                {
+                    membershipNumber = basicCustomerDetail.MembershipNumber;
+                }
             }
         }
         catch (Exception ex)
@@ -775,7 +801,6 @@ public class BlackMembersController : ControllerBase
             return StatusCode(StatusCodes.Status500InternalServerError, $"An unexpected error occurred while retrieving full member details: {ex.Message}");
         }
     }
-
     [HttpPost]
     [Route("api/GetMemberAllProgramDetailsByPhone")]
     public async Task<ActionResult<MemberDetailsByMembershipNumberResponse>> GetFullMemberDetailsForAllProgramsByPhone(string mobilenumber)
