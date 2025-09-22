@@ -21,7 +21,7 @@ builder.Services.AddMicrosoftIdentityWebApiAuthentication(builder.Configuration,
 //builder.Services.AddMicrosoftIdentityWebApiAuthentication(builder.Configuration, "MilesCalculatorAzureAd");
 builder.Services.Configure<SabreConfig>(builder.Configuration.GetSection("Sabre"));
 
-builder.Services.AddHttpClient<FlightStatusService>();
+//builder.Services.AddHttpClient<FlightStatusService>();
 builder.Services.AddHttpClient();
 
 
@@ -80,6 +80,8 @@ builder.Services.AddHttpClient<LoyaltyApiService>((sp, client) =>
 });
 
 builder.Services.AddHttpClient<LoyaltyApiService>();
+
+builder.Services.AddHttpClient<GenesysCallbackService>();
 
 
 

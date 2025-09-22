@@ -1,42 +1,43 @@
 ﻿using System.Net.Http;
+using System.Net.Http.Headers;
+using System.Text;
 using System.Text.Json;
 using System.Threading.Tasks;
 
 namespace CoreWebAPIs.Services
 {
-    public class FlightStatusService
+    public class GenesysAuthService
     {
         private readonly HttpClient _httpClient;
+        private readonly IConfiguration _config;
 
-        public FlightStatusService(HttpClient httpClient)
+        public GenesysAuthService(HttpClient httpClient, IConfiguration config)
         {
             _httpClient = httpClient;
+            _config = config;
         }
 
-        public async Task<FlightStatusResponse?> GetFlightStatusAsync(string flightNumber, string flightDate)
+        public async Task<string> GetAccessTokenAsync()
         {
-            var url = $"https://gfflightstatus.azurewebsites.net/api/flightStatus/{flightNumber}/{flightDate}";
-            var response = await _httpClient.GetAsync(url);
+            var clientId = _config["Genesys:ClientId"];
+            var clientSecret = _config["Genesys:ClientSecret"];
+            var region = _config["Genesys:Region"] ?? "mypurecloud.ie";
 
-            if (!response.IsSuccessStatusCode)
-                return null;
+            var authUrl = $"https://login.{region}/oauth/token";
 
-            var content = await response.Content.ReadAsStringAsync();
-            return JsonSerializer.Deserialize<FlightStatusResponse>(content,
-                new JsonSerializerOptions { PropertyNameCaseInsensitive = true });
+            var authString = Convert.ToBase64String(Encoding.UTF8.GetBytes($"{clientId}:{clientSecret}"));
+
+            var request = new HttpRequestMessage(HttpMethod.Post, authUrl);
+            request.Headers.Authorization = new AuthenticationHeaderValue("Basic", authString);
+            request.Content = new StringContent("grant_type=client_credentials", Encoding.UTF8, "application/x-www-form-urlencoded");
+
+            var response = await _httpClient.SendAsync(request);
+            response.EnsureSuccessStatusCode();
+
+            var json = await response.Content.ReadAsStringAsync();
+            using var doc = JsonDocument.Parse(json);
+
+            return doc.RootElement.GetProperty("access_token").GetString();
         }
-    }
-
-    public class FlightStatusResponse
-    {
-        public string FlightNumber { get; set; }
-        public string Date { get; set; }
-        public string Status { get; set; }
-        public string ScheduledDeparture { get; set; }
-        public string ActualDeparture { get; set; }
-        public string ScheduledArrival { get; set; }
-        public string ActualArrival { get; set; }
-        public string DepartureAirport { get; set; }
-        public string ArrivalAirport { get; set; }
     }
 }
