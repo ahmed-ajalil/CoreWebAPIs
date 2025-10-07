@@ -327,7 +327,7 @@ namespace CoreWebAPIs.Controllers
 
                 var body = new
                 {
-                    queueId = "2f5c1a43-27a1-4f8e-8ff9-d2a5aa8fda9d", // TODO: replace with Prod queueId
+                    queueId = "2f5c1a43-27a1-4f8e-8ff9-d2a5aa8fda9d", 
                     callbackUserName = request.Name,
                     callbackNumbers = new[] { request.Phone },
                     callerId = request.Phone,

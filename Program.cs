@@ -18,7 +18,7 @@ var builder = WebApplication.CreateBuilder(args);
 
 builder.Services.AddMicrosoftIdentityWebApiAuthentication(builder.Configuration, "BaggageCalculatorAzureAd");
 //builder.Services.AddMicrosoftIdentityWebApiAuthentication(builder.Configuration, "FlightAzureAd");
-//builder.Services.AddMicrosoftIdentityWebApiAuthentication(builder.Configuration, "MilesCalculatorAzureAd");
+builder.Services.AddMicrosoftIdentityWebApiAuthentication(builder.Configuration, "MilesCalculatorAzureAd");
 builder.Services.Configure<SabreConfig>(builder.Configuration.GetSection("Sabre"));
 
 //builder.Services.AddHttpClient<FlightStatusService>();
@@ -124,6 +124,7 @@ app.UseHttpsRedirection();
 
 app.UseAuthentication();
 app.UseAuthorization();
+app.UseRouting();
 
 
 app.MapGraphQL("/graphql");
