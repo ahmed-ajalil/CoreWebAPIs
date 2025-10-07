@@ -59,7 +59,7 @@ namespace CoreWebAPIs.Controllers
                 return BadRequest("Locator (PNR) is required.");
 
             // ✅ Step 1: Validate API key
-            var configuredKey = _config["ProdApiKey"]; // Key in appsettings or Azure Configuration
+            var configuredKey = _config["Sabre:ProdApiKey"]; // Key in appsettings or Azure Configuration
             if (string.IsNullOrEmpty(configuredKey) || apiKey != configuredKey)
                 return Unauthorized("Invalid or missing API key.");
 
